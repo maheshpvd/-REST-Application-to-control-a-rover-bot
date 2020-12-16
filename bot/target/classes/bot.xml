@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<bot>
+	<requests>
+	</requests>
+
+	<currentPosition>
+		<position>
+			<direction></direction>
+			<x></x>
+			<y></y>
+		</position>
+	</currentPosition>
+</bot>
+
