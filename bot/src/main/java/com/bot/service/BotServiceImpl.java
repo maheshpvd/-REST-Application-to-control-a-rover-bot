@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +17,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -25,93 +26,120 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.bot.common.BotException;
 import com.bot.response.Position;
 import com.bot.response.Response;
 import com.bot.vo.Move;
 import com.bot.vo.Request;
 
+/**
+ * 
+ * This class acts as a business layer which actually has 
+ * the business logic on operation of position of the bot. 
+ *
+ */
 @Service
 public class BotServiceImpl implements BotService {
+	private static final Logger LOGGER = LoggerFactory.getLogger(BotServiceImpl.class);
 
 	private static final String XML_NAME = "bot.xml";
 	private static final int TOTAL_DIRECTIONS = 4;
+	private static final String STARTED_LOG = "Started";
+	private static final String COMPLETED_LOG = "Completed";
+	private static final String CURRENTPOSITION = "currentPosition";
+	private static final String POSITION = "position";
+	private static final String DIRECTION = "direction";
+	static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+	static TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
 	@Override
-	public Response getCurrentPosition() throws Exception {
+	public Response getCurrentPosition() throws BotException {
+		LOGGER.debug(STARTED_LOG);
 		Response response = new Response();
 		response.setPosition(getCurrentPositionFromXML());
+		LOGGER.debug(COMPLETED_LOG);
 		return response;
 	}
 
-	private Position getCurrentPositionFromXML() {
+	@Override
+	public Response changePosition(Request request) throws BotException {
+		LOGGER.debug(STARTED_LOG);
+		Response response = new Response();
+		try {
+			List<Move> moves = request.getMove();
+			com.bot.vo.Position pos = request.getPosition();
+
+			Position position = new Position();
+			position.setDirection(pos.getDirection());
+			position.setX(pos.getX());
+			position.setY(pos.getY());
+			if (moves == null || moves.isEmpty()) {
+				response.setPosition(position);
+				return response;
+			}
+			Map<Integer, String> directions = getDirections();
+			Map<String, Integer> directionsR = getDirectionsR();
+			List<String> rotations = BotService.getRotationsAllowed();
+			if (!validateInput(request, rotations, directionsR)) {
+				LOGGER.debug("Invali Input");
+				throw new BotException("Invali Input");
+			}
+			int d = 0;
+			int current = directionsR.get(position.getDirection());
+			int x = Integer.parseInt(position.getX());
+			int y = Integer.parseInt(position.getY());
+
+			Collections.sort(moves, (o1, o2) -> o1.getO().compareTo(o2.getO()));
+			for (Move move : moves) {
+				current = getCurrentDirection(move, rotations, current);
+				String f = move.getF();
+				String b = move.getB();
+				if (f != null) {
+					d = Integer.parseInt(f);
+					x = x + d;
+				} else if (b != null) {
+					d = Integer.parseInt(b);
+					y = y - d;
+				}
+			}
+			position.setDirection(directions.get(current));
+			position.setX(String.valueOf(x));
+			position.setY(String.valueOf(y));
+			response.setPosition(position);
+			updateResponse(position, request);
+		} catch (Exception e) {
+			LOGGER.error("Exception", e.fillInStackTrace());
+			throw new BotException("Internal Server Error");
+		}
+		LOGGER.debug(COMPLETED_LOG);
+		return response;
+	}
+
+	private Position getCurrentPositionFromXML() throws BotException {
+		LOGGER.debug(STARTED_LOG);
 		Position position = new Position();
 		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 			DocumentBuilder builder = factory.newDocumentBuilder();
 			URL url = getClass().getClassLoader().getResource(XML_NAME);
 			File file1 = new File(url.toURI());
 			Document document = builder.parse(file1);
 			document.getDocumentElement().normalize();
-			NodeList nList = document.getElementsByTagName("currentPosition");
+			NodeList nList = document.getElementsByTagName(CURRENTPOSITION);
 			Node node = nList.item(0);
-			NodeList nList1 = document.getElementsByTagName("position");
+			NodeList nList1 = document.getElementsByTagName(POSITION);
 			Node node1 = nList1.item(0);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
 				Element eElement = (Element) node1;
-				position.setDirection(eElement.getElementsByTagName("direction").item(0).getTextContent());
+				position.setDirection(eElement.getElementsByTagName(DIRECTION).item(0).getTextContent());
 				position.setX(eElement.getElementsByTagName("x").item(0).getTextContent());
 				position.setY(eElement.getElementsByTagName("y").item(0).getTextContent());
 			}
-		} catch (SAXException | IOException | URISyntaxException | ParserConfigurationException e) {
-			e.printStackTrace();
 		} catch (Exception e) {
-			e.printStackTrace();
+			LOGGER.error("Exception", e.fillInStackTrace());
+			throw new BotException("Internal Server Error");
 		}
-
+		LOGGER.debug(COMPLETED_LOG);
 		return position;
-	}
-
-	@Override
-	public Response changePosition(Request request) throws Exception {
-		Response response = new Response();
-		List<Move> moves = request.getMove();
-		Position position = getCurrentPositionFromXML();
-		if (moves == null || moves.isEmpty()) {
-			response.setPosition(position);
-			return response;
-		}
-
-		Collections.sort(moves, new Comparator<Move>() {
-			public int compare(Move o1, Move o2) {
-				return o1.getO().compareTo(o2.getO());
-			}
-		});
-
-		Map<Integer, String> directions = getDirections();
-		Map<String, Integer> directions1 = getDirections1();
-		List<String> rotations = BotService.getRotationsAllowed();
-		int d = 0;
-		int current = directions1.get(position.getDirection());
-		int x = Integer.parseInt(position.getX());
-		int y = Integer.parseInt(position.getY());
-		for (Move move : moves) {
-			current = getCurrentDirection(move, rotations, current);
-			String f = move.getF();
-			String b = move.getB();
-			if (f != null) {
-				d = Integer.parseInt(f);
-				x = x + d;
-			} else if (b != null) {
-				d = Integer.parseInt(b);
-				y = y - d;
-			}
-		}
-		position.setDirection(directions.get(current));
-		position.setX(String.valueOf(x));
-		position.setY(String.valueOf(y));
-		response.setPosition(position);
-		updateResponse(position, request);
-		return response;
 	}
 
 	private int getCurrentDirection(Move move, List<String> rotations, int current) {
@@ -152,24 +180,25 @@ public class BotServiceImpl implements BotService {
 		}
 	}
 
-	private void updateResponse(Position position, Request request) {
-		try {
-			DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-			DocumentBuilder builder = factory.newDocumentBuilder();
-			URL url = getClass().getClassLoader().getResource(XML_NAME);
-			File file1 = new File(url.toURI());
-			Document document = builder.parse(file1);
+	private void updateResponse(Position position, Request request)
+			throws ParserConfigurationException, URISyntaxException, SAXException, IOException, TransformerException {
+		LOGGER.debug(STARTED_LOG);
+		DocumentBuilder builder = factory.newDocumentBuilder();
+		URL url = getClass().getClassLoader().getResource(XML_NAME);
+		File file = new File(url.toURI());
+		if (file.exists()) {
+			Document document = builder.parse(file);
 			NodeList rnList = document.getElementsByTagName("requests");
 			Node rnode = rnList.item(0);
 			appendChild(rnode, document, request);
 
-			NodeList nList = document.getElementsByTagName("currentPosition");
+			NodeList nList = document.getElementsByTagName(CURRENTPOSITION);
 			Node node = nList.item(0);
-			NodeList nList1 = document.getElementsByTagName("position");
+			NodeList nList1 = document.getElementsByTagName(POSITION);
 			Node node1 = nList1.item(0);
 			if (node.getNodeType() == Node.ELEMENT_NODE) {
 				Element eElement = (Element) node1;
-				Node dir1 = eElement.getElementsByTagName("direction").item(0);
+				Node dir1 = eElement.getElementsByTagName(DIRECTION).item(0);
 				dir1.setTextContent(position.getDirection());
 				Node dir2 = eElement.getElementsByTagName("x").item(0);
 				dir2.setTextContent(position.getX());
@@ -177,33 +206,24 @@ public class BotServiceImpl implements BotService {
 				dir3.setTextContent(position.getY());
 			}
 
-			TransformerFactory transformerFactory = TransformerFactory.newInstance();
 			Transformer transformer = transformerFactory.newTransformer();
 			DOMSource source = new DOMSource(document);
-			StreamResult result = new StreamResult(file1);
+			StreamResult result = new StreamResult(file);
 			transformer.transform(source, result);
-		} catch (SAXException | IOException | URISyntaxException | ParserConfigurationException
-				| TransformerException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
 		}
+
+		LOGGER.debug(COMPLETED_LOG);
 	}
 
 	private void appendChild(Node rnode, Document document, Request request) {
+		LOGGER.debug(STARTED_LOG);
 		com.bot.vo.Position position = request.getPosition();
 		List<Move> movesList = request.getMove();
-		Element dir = document.createElement("Direction");
-		dir.setTextContent(position.getDirection());
-		Element x = document.createElement("X");
-		x.setTextContent(position.getX());
-		Element y = document.createElement("Y");
-		y.setTextContent(position.getY());
 
 		Element pos = document.createElement("Position");
-		pos.appendChild(dir);
-		pos.appendChild(x);
-		pos.appendChild(y);
+		pos.appendChild(createElement("Direction", position.getDirection(), document));
+		pos.appendChild(createElement("X", position.getX(), document));
+		pos.appendChild(createElement("Y", position.getY(), document));
 
 		Element moves = document.createElement("Moves");
 		for (Move move : movesList) {
@@ -213,23 +233,15 @@ public class BotServiceImpl implements BotService {
 			o.setTextContent(move.getO());
 			mv.appendChild(o);
 			if (move.getL() != null) {
-				Element le = document.createElement("L");
-				le.setTextContent(move.getL());
-				mv.appendChild(le);
+				mv.appendChild(createElement("L", move.getL(), document));
 			} else if (move.getR() != null) {
-				Element re = document.createElement("R");
-				re.setTextContent(move.getR());
-				mv.appendChild(re);
+				mv.appendChild(createElement("R", move.getR(), document));
 			}
 
 			if (move.getF() != null) {
-				Element fe = document.createElement("F");
-				fe.setTextContent(move.getF());
-				mv.appendChild(fe);
+				mv.appendChild(createElement("F", move.getF(), document));
 			} else if (move.getB() != null) {
-				Element be = document.createElement("B");
-				be.setTextContent(move.getB());
-				mv.appendChild(be);
+				mv.appendChild(createElement("B", move.getB(), document));
 			}
 			moves.appendChild(mv);
 		}
@@ -237,6 +249,36 @@ public class BotServiceImpl implements BotService {
 		req.appendChild(pos);
 		req.appendChild(moves);
 		rnode.appendChild(req);
+		LOGGER.debug(COMPLETED_LOG);
+	}
+
+	private Element createElement(String e, String v, Document document) {
+		Element ele = document.createElement(e);
+		ele.setTextContent(v);
+		return ele;
+	}
+
+	private boolean validateInput(Request request, List<String> rotations, Map<String, Integer> directionsR) {
+		com.bot.vo.Position pos = request.getPosition();
+		String dir = pos.getDirection();
+		if (dir == null || dir.isEmpty() || !directionsR.containsKey(dir)) {
+			return false;
+		}
+
+		List<Move> moves = request.getMove();
+		for (Move move : moves) {
+			String l = move.getL();
+			if (l != null && !l.isEmpty() && !rotations.contains(l)) {
+				return false;
+			}
+			String r = move.getL();
+			if (r != null && !r.isEmpty() && !rotations.contains(r)) {
+				return false;
+			}
+		}
+
+		return true;
+
 	}
 
 }
