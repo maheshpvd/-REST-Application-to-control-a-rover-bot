@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <property resource="application.properties" />
+    <property name="springAppName" value="${spring.application.name}"/>
+
+    <appender name="ROLL_SIZE_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/bot/bot.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/bot/bot.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <timeBasedFileNamingAndTriggeringPolicy
+                    class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>10MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+            <maxHistory>3</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{dd-MMM-yyyy HH:mm:ss.SSS} [${springAppName:-}, %X{traceId:-},%X{spanId:-}] %level %X{key:-} ${PID:-} %thread %logger{40} - %message%n</pattern>
+        </encoder>
+    </appender>
+    <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
+        <queueSize>500</queueSize>
+        <neverBlock>false</neverBlock>
+        <discardingThreshold>0</discardingThreshold>
+        <maxFlushTime>1000</maxFlushTime>
+        <appender-ref ref="ROLL_SIZE_FILE" />
+    </appender>
+
+
+    <logger name="com.bot" level="DEBUG" additivity="false">
+		<appender-ref ref="ASYNC" />
+	</logger>
+
+	<logger name="org.springframework" level="ERROR"
+		additivity="false">
+		<appender-ref ref="ASYNC" />
+	</logger>
+
+	<root level="INFO">
+		<appender-ref ref="ASYNC" />
+	</root>
+
+</configuration>
