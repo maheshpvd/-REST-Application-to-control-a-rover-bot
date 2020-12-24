@@ -6,6 +6,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * 
+ * This class hold the data of position of a bot
+ *
+ */
 @XmlRootElement
 public class Position implements Serializable {
 	private static final long serialVersionUID = -4036348441662891611L;
