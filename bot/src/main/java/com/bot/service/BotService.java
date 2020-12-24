@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.bot.common.BotException;
 import com.bot.response.Response;
 import com.bot.vo.Request;
 
@@ -29,7 +30,7 @@ public interface BotService {
 		return directions;
 	}
 
-	default Map<String, Integer> getDirections1() {
+	default Map<String, Integer> getDirectionsR() {
 		Map<String, Integer> directions = new HashMap<>();
 		directions.put("N", 1);
 		directions.put("E", 2);
@@ -38,8 +39,8 @@ public interface BotService {
 		return directions;
 	}
 
-	public Response getCurrentPosition() throws Exception;
+	public Response getCurrentPosition() throws BotException;
 
-	public Response changePosition(Request request) throws Exception;
+	public Response changePosition(Request request) throws BotException;
 
 }
