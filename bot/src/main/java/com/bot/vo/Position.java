@@ -1,6 +1,7 @@
 package com.bot.vo;
 
 import java.io.Serializable;
+import java.util.List;
 
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -9,54 +10,42 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * 
- * This class hold the data of position of a bot
+ * This class hold the request data of a bot to change position
  *
  */
 @XmlRootElement
-public class Position implements Serializable{
-	private static final long serialVersionUID = -4036348441662891611L;
+public class Request implements Serializable{
+
+	private static final long serialVersionUID = -3818803695806261061L;
 	
 	
-	@JsonProperty("Direction")
-	private String direction;
+	@JsonProperty("Position")
+	private Position position;
+
+	@JsonProperty("Move")
+	private List<Move> move;
 	
-	@JsonProperty("X")
-	private String x;
-	
-	@JsonProperty("Y")
-	private String y;
-	
-	public String getDirection() {
-		return direction;
+	public Position getPosition() {
+		return position;
 	}
 
 	@XmlElement
-	public void setDirection(String direction) {
-		this.direction = direction;
+	public void setPosition(Position position) {
+		this.position = position;
 	}
-
-	public String getX() {
-		return x;
-	}
-
-	@XmlElement
-	public void setX(String x) {
-		this.x = x;
-	}
-
-	public String getY() {
-		return y;
+	public List<Move> getMove() {
+		return move;
 	}
 
 	@XmlElement
-	public void setY(String y) {
-		this.y = y;
+	public void setMove(List<Move> move) {
+		this.move = move;
 	}
 
 	@Override
 	public String toString() {
-		return "Position [direction=" + direction + ", x=" + x + ", y=" + y + "]";
+		return "Request [position=" + position + ", move=" + move + "]";
 	}
-	
+
 	
 }
