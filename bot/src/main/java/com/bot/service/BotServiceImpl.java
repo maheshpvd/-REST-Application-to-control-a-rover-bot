@@ -52,6 +52,11 @@ public class BotServiceImpl implements BotService {
 	static DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 	static TransformerFactory transformerFactory = TransformerFactory.newInstance();
 
+	/*
+	 * (non-Javadoc)
+	 * @see com.bot.service.BotService#getCurrentPosition()
+	 * Get Current position of bot
+	 */
 	@Override
 	public Response getCurrentPosition() throws BotException {
 		LOGGER.debug(STARTED_LOG);
@@ -61,6 +66,11 @@ public class BotServiceImpl implements BotService {
 		return response;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see com.bot.service.BotService#changePosition(com.bot.vo.Request)
+	 * This method is used to process the position of  bot with requested input
+	 */
 	@Override
 	public Response changePosition(Request request) throws BotException {
 		LOGGER.debug(STARTED_LOG);
@@ -113,6 +123,9 @@ public class BotServiceImpl implements BotService {
 		return response;
 	}
 
+	/*
+	 * This is a private method which fetches current position from bot.xml
+	 */
 	private Position getCurrentPositionFromXML() throws BotException {
 		LOGGER.debug(STARTED_LOG);
 		Position position = new Position();
@@ -140,6 +153,9 @@ public class BotServiceImpl implements BotService {
 		return position;
 	}
 
+	/*
+	 *  This is a private method which calculates the current position post applying each move
+	 */
 	private int getCurrentDirection(Move move, List<String> rotations, int current) {
 		String l = move.getL();
 		String r = move.getR();
@@ -156,6 +172,9 @@ public class BotServiceImpl implements BotService {
 		return current;
 	}
 
+	/*
+	 *  This is a private method which get reverse direction of bot
+	 */
 	private int getReverseDirection(int current, int changed) {
 		if (changed == 0 || changed == 4) {
 			return current;
@@ -165,6 +184,9 @@ public class BotServiceImpl implements BotService {
 		return a;
 	}
 
+	/*
+	 *  This is a private method which gets forward direction of bot
+	 */
 	private int getForwardDirection(int current, int changed) {
 		if (changed == 0 || changed == 4) {
 			return current;
@@ -178,6 +200,9 @@ public class BotServiceImpl implements BotService {
 		}
 	}
 	
+	/*
+	 *  This is a private method which gets X-axis value
+	 */
 	private int getXAxisVal(int current, String f, String b, int x) throws BotException {
 		int d = 0;
 		if(current==4 || current==2) {
@@ -198,6 +223,9 @@ public class BotServiceImpl implements BotService {
 		return x;
 	}
 	
+	/*
+	 *  This is a private method which gets Y-axis value
+	 */
 	private int getYAxisVal(int current, String f, String b, int y) throws BotException {
 		int d = 0;
 		if(current==1 || current==3) {
@@ -218,6 +246,9 @@ public class BotServiceImpl implements BotService {
 		return y;
 	}
 
+	/*
+	 * This is a private method which updates the response in bot.xml
+	 */
 	private void updateResponse(Position position, Request request)
 			throws ParserConfigurationException, URISyntaxException, SAXException, IOException, TransformerException {
 		LOGGER.debug(STARTED_LOG);
@@ -253,6 +284,9 @@ public class BotServiceImpl implements BotService {
 		LOGGER.debug(COMPLETED_LOG);
 	}
 
+	/*
+	 * This is a private method which appends the new request in bot.xml
+	 */
 	private void appendChild(Node rnode, Document document, Request request) {
 		LOGGER.debug(STARTED_LOG);
 		com.bot.vo.Position position = request.getPosition();
@@ -290,12 +324,18 @@ public class BotServiceImpl implements BotService {
 		LOGGER.debug(COMPLETED_LOG);
 	}
 
+	/*
+	 * This is a private method which creates new element
+	 */
 	private Element createElement(String e, String v, Document document) {
 		Element ele = document.createElement(e);
 		ele.setTextContent(v);
 		return ele;
 	}
 
+	/*
+	 * This is a private method which validates the input request
+	 */
 	private boolean validateInput(Request request, List<String> rotations, Map<String, Integer> directionsR) {
 		com.bot.vo.Position pos = request.getPosition();
 		String dir = pos.getDirection();
