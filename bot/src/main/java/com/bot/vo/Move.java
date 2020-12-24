@@ -6,6 +6,11 @@ import javax.xml.bind.annotation.XmlElement;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * 
+ * This class hold the data of move of a bot
+ *
+ */
 public class Move implements Serializable{
 	
 	private static final long serialVersionUID = 1374053171332596182L;
