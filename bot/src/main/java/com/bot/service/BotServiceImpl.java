@@ -68,7 +68,13 @@ public class BotServiceImpl implements BotService {
 		try {
 			List<Move> moves = request.getMove();
 			com.bot.vo.Position pos = request.getPosition();
-
+			Map<String, Integer> directionsR = getDirectionsR();
+			List<String> rotations = BotService.getRotationsAllowed();
+			if (!validateInput(request, rotations, directionsR)) {
+				LOGGER.debug("Invali Input");
+				throw new BotException("Invalid Input");
+			}
+			
 			Position position = new Position();
 			position.setDirection(pos.getDirection());
 			position.setX(pos.getX());
@@ -78,13 +84,7 @@ public class BotServiceImpl implements BotService {
 				return response;
 			}
 			Map<Integer, String> directions = getDirections();
-			Map<String, Integer> directionsR = getDirectionsR();
-			List<String> rotations = BotService.getRotationsAllowed();
-			if (!validateInput(request, rotations, directionsR)) {
-				LOGGER.debug("Invali Input");
-				throw new BotException("Invali Input");
-			}
-			int d = 0;
+			
 			int current = directionsR.get(position.getDirection());
 			int x = Integer.parseInt(position.getX());
 			int y = Integer.parseInt(position.getY());
@@ -94,20 +94,18 @@ public class BotServiceImpl implements BotService {
 				current = getCurrentDirection(move, rotations, current);
 				String f = move.getF();
 				String b = move.getB();
-				if (f != null) {
-					d = Integer.parseInt(f);
-					x = x + d;
-				} else if (b != null) {
-					d = Integer.parseInt(b);
-					y = y - d;
-				}
+				x = getXAxisVal(current, f, b, x);
+				y = getYAxisVal(current, f, b, y);
 			}
 			position.setDirection(directions.get(current));
 			position.setX(String.valueOf(x));
 			position.setY(String.valueOf(y));
 			response.setPosition(position);
 			updateResponse(position, request);
-		} catch (Exception e) {
+		} catch (BotException e) {
+			LOGGER.error("Exception", e.fillInStackTrace());
+			throw new BotException(e.getMessage());
+		}catch (Exception e) {
 			LOGGER.error("Exception", e.fillInStackTrace());
 			throw new BotException("Internal Server Error");
 		}
@@ -178,6 +176,46 @@ public class BotServiceImpl implements BotService {
 		} else {
 			return a;
 		}
+	}
+	
+	private int getXAxisVal(int current, String f, String b, int x) throws BotException {
+		int d = 0;
+		if(current==4 || current==2) {
+			if (f != null) {
+				d = Integer.parseInt(f);
+				if(d < 0) {
+					throw new BotException("Invalid Input. Move should not be a negative value");
+				}
+				x = x - d;
+			} else if (b != null) {
+				d = Integer.parseInt(b);
+				if(d < 0) {
+					throw new BotException("Invalid Input. Move should not be a negative value");
+				}
+				x = x +(- d);
+			}
+		}
+		return x;
+	}
+	
+	private int getYAxisVal(int current, String f, String b, int y) throws BotException {
+		int d = 0;
+		if(current==1 || current==3) {
+			if (f != null) {
+				d = Integer.parseInt(f);
+				if(d < 0) {
+					throw new BotException("Invalid Input. Move should not be a negative value");
+				}
+				y = y + d;
+			} else if (b != null) {
+				d = Integer.parseInt(b);
+				if(d < 0) {
+					throw new BotException("Invalid Input. Move should not be a negative value");
+				}
+				y = y +(- d);
+			}
+		}
+		return y;
 	}
 
 	private void updateResponse(Position position, Request request)
