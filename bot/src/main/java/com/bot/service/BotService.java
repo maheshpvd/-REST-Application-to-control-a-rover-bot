@@ -9,6 +9,12 @@ import com.bot.common.BotException;
 import com.bot.response.Response;
 import com.bot.vo.Request;
 
+/**
+ * 
+ * This is an interface this has  abstract functions for get and change position of a bot
+ * This also holds the default config/rules that has to be applied on actions 
+ *
+ */
 public interface BotService {
 
 	static List<String> getRotationsAllowed() {
