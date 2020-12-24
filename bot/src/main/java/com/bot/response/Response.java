@@ -4,6 +4,11 @@ import java.io.Serializable;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * 
+ *  This class hold the response data of a bot
+ *
+ */
 public class Response implements Serializable{
 
 	private static final long serialVersionUID = -3818803695806261061L;
