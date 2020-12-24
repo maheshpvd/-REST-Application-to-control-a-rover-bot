@@ -1,0 +1,133 @@
+Build Application
+Execute: mvn clean install
+Run Application
+Execute: mvn spring-boot:run
+
+Test Cases:
+
+Test Case-1:
+{
+  "Position": {
+    "Direction": "N",
+    "X": 10,
+    "Y": 10
+  },
+  "Move": [
+    {
+      "O": "1",
+      "L": 90,
+      "F": 10
+    },
+    {
+      "O": "2",
+      "R": 180,
+      "B": 20
+    }
+  ]
+}
+
+
+Output:
+{"Position":{"Direction":"E","X":"-20","Y":"10"}}
+
+
+Test Case-2:
+{
+  "Position": {
+    "Direction": "N",
+    "X": 20,
+    "Y": 10
+  },
+  "Move": [
+    {
+      "O": "1",
+      "L": 90,
+      "F": 10
+    },
+    {
+      "O": "2",
+      "R": 180,
+      "B": 20
+    }
+  ]
+}
+
+
+Output:
+{"Position":{"Direction":"E","X":"-10","Y":"10"}}
+
+
+Test Case-3:
+{
+  "Position": {
+    "Direction": "E",
+    "X": -20,
+    "Y": -30
+  },
+  "Move": [
+    {
+      "O": "1",
+      "L": 90,
+      "F": 10
+    },
+    {
+      "O": "2",
+      "R": 90,
+      "B": 20
+    }
+  ]
+}
+
+Output:
+{"Position":{"Direction":"W","X":"-40","Y":"-20"}}
+
+
+
+Negative Test Case:
+
+Test Case-1:
+{
+  "Position": {
+    "Direction": "Y",
+    "X": -20,
+    "Y": -30
+  },
+  "Move": [
+    {
+      "O": "1",
+      "L": 90,
+      "F": 10
+    },
+    {
+      "O": "2",
+      "R": 90,
+      "B": 20
+    }
+  ]
+}
+
+Output:
+Invalid Input
+
+Test Case-2:
+{
+  "Position": {
+    "Direction": "N",
+    "X": -20,
+    "Y": -30
+  },
+  "Move": [
+    {
+      "O": "1",
+      "L": 90,
+      "F": -10
+    },
+    {
+      "O": "2",
+      "R": 90,
+      "B": 20
+    }
+  ]
+}
+Output:
+Invalid Input. Move should not be a negative value
